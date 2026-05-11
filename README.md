@@ -1,11 +1,4 @@
 # AgriTalk: Calibrated Natural Language Interfaces for Agricultural Robotics
-
-**PhD Position L — GreenFieldData Project (ANR)**  
-Candidate: Partha Pratim Saha  
-Supervisors: Dr. Genoveva Vargas-Solar (CNRS, LIG) · Prof. Roberto Oberti (UniMI)  
-Institutions: UCBLyon1 · UniMI · ProBayes · CFL · CNRS  
-Timeline: October 2026 – September 2029
-
 ---
 
 ## What is this?
