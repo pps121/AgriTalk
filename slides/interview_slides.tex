@@ -1,0 +1,619 @@
+% =====================================================================
+% GreenFieldData PhD-L Interview Slides
+% Candidate: Partha Pratim Saha
+% Interview: 30 minutes | 12 slides
+% =====================================================================
+\documentclass[aspectratio=169,10pt]{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+\useinnertheme{circles}
+
+\usepackage{times}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usepackage{pgfgantt}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{multirow}
+\usepackage{setspace}
+\usepackage[T1]{fontenc}
+
+\definecolor{agrigreen}{RGB}{34,139,34}
+\definecolor{techblue}{RGB}{0,70,127}
+\definecolor{warnorange}{RGB}{200,90,20}
+\definecolor{trustpurple}{RGB}{100,40,140}
+
+\setbeamercolor{palette primary}{bg=techblue, fg=white}
+\setbeamercolor{palette secondary}{bg=techblue!85, fg=white}
+\setbeamercolor{palette tertiary}{bg=techblue!70, fg=white}
+\setbeamercolor{structure}{fg=techblue}
+\setbeamercolor{block title}{bg=techblue!90,fg=white}
+\setbeamercolor{block body}{bg=techblue!8,fg=black}
+\setbeamercolor{block title alerted}{bg=warnorange!90,fg=white}
+\setbeamercolor{block body alerted}{bg=warnorange!10,fg=black}
+\setbeamercolor{block title example}{bg=agrigreen!85,fg=white}
+\setbeamercolor{block body example}{bg=agrigreen!8,fg=black}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\newcommand{\contrib}[2]{\textbf{\color{techblue}#1:} #2}
+\newcommand{\rq}[2]{\textbf{\color{agrigreen}RQ#1:} #2}
+
+% =====================================================================
+\title[AgriTalk: Calibrated NL for Agricultural Robotics]{%
+  Calibrated Intent Compilation and Faithful Explanation\\
+  for Human-Supervised Agricultural Robotic Systems}
+\subtitle{PhD Position L --- GreenFieldData MSCA Joint Doctorate}
+\author[Partha Pratim Saha]{Partha Pratim Saha \\ \small\texttt{technical.partha@gmail.com}}
+\institute[GreenFieldData 2026]{%
+  Supervisors:\\
+  Dr.\ Genoveva Vargas-Solar (CNRS/UCBLyon1, Lyon)\\
+  Prof.\ Roberto Oberti (Universit\`{a} degli Studi di Milano)}
+\date{May 2026}
+
+\begin{document}
+
+% =====================================================================
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+% =====================================================================
+% SLIDE 1 — The Real Problem
+% =====================================================================
+\begin{frame}{The Real Problem Is Not ``Build a Chatbot for Farmers''}
+
+\begin{columns}[T]
+\column{0.52\textwidth}
+\begin{block}{A Field Operator Says\ldots}
+\begin{center}
+\Large\itshape
+``Spray more pesticide on\\
+the struggling section\\
+near the east boundary.''
+\end{center}
+\end{block}
+
+\medskip
+\small This single utterance is simultaneously ambiguous over:
+\begin{itemize}
+  \item \textbf{Spatial}: which section? (NDVI map required)
+  \item \textbf{Quantitative}: ``more'' relative to what baseline?
+  \item \textbf{Chemical}: which pesticide, which dosage?
+  \item \textbf{Temporal}: safe \emph{now}? (current wind speed?)
+\end{itemize}
+
+\column{0.46\textwidth}
+\begin{alertblock}{Consequences of Getting It Wrong}
+\begin{itemize}
+  \item Wrong zone $\to$ crop destruction
+  \item Wrong chemical $\to$ resistance development
+  \item Wrong conditions $\to$ environmental harm + regulatory violation
+\end{itemize}
+\end{alertblock}
+
+\medskip
+\begin{exampleblock}{And of Over-Correction}
+\small A system that asks for confirmation on every query $\to$
+\textbf{alert fatigue $\to$ system abandonment}
+\end{exampleblock}
+
+\end{columns}
+
+\medskip
+\begin{center}
+\textbf{\color{techblue}Research challenge: resolve ambiguity with statistically grounded confidence,
+real-time field context, and explanations operators can audit and trust.}
+\end{center}
+
+\end{frame}
+
+% =====================================================================
+% SLIDE 2 — Research Gap: 3 Challenges
+% =====================================================================
+\begin{frame}{Three Interlocking Scientific Challenges}
+
+\begin{columns}[T]
+\column{0.32\textwidth}
+\begin{block}{\#1 Calibration Gap}
+LLM softmax is overconfident on OOD agricultural inputs (Guo et al., ICML 2017).\\[4pt]
+\textit{Need: statistically valid uncertainty, not heuristic thresholds.}
+\end{block}
+
+\column{0.32\textwidth}
+\begin{block}{\#2 Streaming Grounding}
+Conditions change faster than queries arrive:\\
+wind 2\,m/s at 08:00 $\to$ 7\,m/s at 14:00.\\[4pt]
+\textit{Need: atomically consistent context at query receipt time.}
+\end{block}
+
+\column{0.32\textwidth}
+\begin{block}{\#3 Faithfulness Gap}
+LLM explanations can sound correct but not trace to actual computation (Lipton 2018).\\[4pt]
+\textit{Need: explanations verifiable by agronomists \& EU AI Act audit.}
+\end{block}
+\end{columns}
+
+\bigskip
+\begin{center}
+\small
+\begin{tabular}{@{}clll@{}}
+\toprule
+\textbf{Challenge} & \textbf{State of the Art} & \textbf{Gap} & \textbf{My Contribution} \\
+\midrule
+Calibration & Softmax confidence, temperature scaling & Not distribution-free & C1: Conformal CIC \\
+Streaming & Static KB retrieval & No IoT-stream grounding & C2: TSCA \\
+Faithfulness & Post-hoc LLM explanation & Plausible $\neq$ faithful & C3: FAES \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{frame}
+
+% =====================================================================
+% SLIDE 3 — Research Questions and Contributions
+% =====================================================================
+\begin{frame}{Research Questions \& Novel Contributions (C1--C4)}
+
+\begin{columns}[T]
+\column{0.48\textwidth}
+\textbf{\color{techblue}Research Questions}
+\begin{itemize}[leftmargin=1em,itemsep=4pt]\small
+  \item[\textbf{RQ1}] Can conformal prediction sets enable principled HITL policies
+    that minimise \emph{both} unsafe autonomy \emph{and} alert fatigue?
+  \item[\textbf{RQ2}] Can streaming context aggregation ground NL commands against
+    atomically consistent, time-indexed IoT field state?
+  \item[\textbf{RQ3}] Can explanation generation be \emph{measurably faithful} to
+    the actual computational path?
+  \item[\textbf{RQ4}] Can Metaflow reproducibility enable comparative evaluation at
+    agricultural field scale?
+\end{itemize}
+
+\column{0.50\textwidth}
+\textbf{\color{techblue}Novel Contributions}
+\begin{itemize}[leftmargin=0.5em,itemsep=4pt]\small
+  \item[\textbf{C1}] \textbf{Calibrated Intent Compiler (CIC)} \\
+    Conformal prediction $\to$ HITL policy mapping \\
+    \textit{\color{agrigreen}ACL 2027 / EMNLP 2027}
+  \item[\textbf{C2}] \textbf{Temporal Streaming Aggregator (TSCA)} \\
+    Kafka + Spark sliding-window context register \\
+    \textit{\color{agrigreen}VLDB 2027 / AAAI 2028}
+  \item[\textbf{C3}] \textbf{Faithful Explanation System (FAES)} \\
+    Rule-auditable + KB-traceable + IG attribution \\
+    \textit{\color{agrigreen}FAccT 2028}
+  \item[\textbf{C4}] \textbf{Reproducible AI Infrastructure (RAAI)} \\
+    Metaflow DAG for reproducible agri-AI experiments \\
+    \textit{\color{agrigreen}MLSys 2027}
+\end{itemize}
+\end{columns}
+
+\end{frame}
+
+% =====================================================================
+% SLIDE 4 — System Architecture
+% =====================================================================
+\begin{frame}{AgriTalk System Architecture: Five Information Boundaries}
+
+\begin{center}
+\small
+\begin{tabular}{@{}clp{6.2cm}l@{}}
+\toprule
+\textbf{B\#} & \textbf{Boundary} & \textbf{What Happens} & \textit{Contrib.} \\
+\midrule
+B1 & Physical $\to$ Digital & IoT sensors $\to$ raw streams; data quality validation & C4 \\
+B2 & Streaming $\to$ Context & Kafka + Spark 15-min sliding window $\to$ field-state register & C2 \\
+B3 & Language $\to$ Intent & NL query $\to$ 5-class intent + slots; \textbf{conformal confidence} & C1 \\
+B4 & Intent $\to$ Command & Slot grounding vs EPPO/PPDB/AGROVOC KB; unverified blocked & C3 \\
+B5 & Command $\to$ Robot & HITL gate $\to$ ROS2 publication; ABORT path $<$800\,ms edge & C1, C3 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+\begin{columns}[T]
+\column{0.48\textwidth}
+\begin{block}{Edge Deployment (B5)}
+\small
+Mistral-7B 4-bit GGUF on NVIDIA Jetson Orin\\
+$\to$ ABORT latency target: $<$800\,ms\\
+Same corpus + calibration set as cloud model
+\end{block}
+
+\column{0.48\textwidth}
+\begin{block}{Cloud Inference (B3, B4)}
+\small
+Llama-3-8B-Instruct on GPU endpoint\\
+Complex / latency-tolerant queries\\
+Full Integrated Gradients attribution available
+\end{block}
+\end{columns}
+
+\medskip
+\begin{center}
+\textbf{\color{techblue}Each boundary = a testable failure mode = a research artifact}
+\end{center}
+
+\end{frame}
+
+% =====================================================================
+% SLIDE 5 — The Calibration Insight (C1)
+% =====================================================================
+\begin{frame}{The Calibration Insight: Conformal Prediction Sets $\to$ HITL Policy}
+
+\begin{columns}[T]
+\column{0.46\textwidth}
+\textbf{Why not softmax confidence?}
+\begin{itemize}\small
+  \item Overconfident on OOD agricultural commands (Guo et al. 2017)
+  \item No distribution-free guarantees
+  \item Threshold-tuning is manual and brittle
+\end{itemize}
+
+\medskip
+\textbf{Conformal prediction gives:}
+\[
+  \mathbb{P}\!\bigl(y \in \mathcal{C}(x)\bigr) \geq 1 - \alpha
+\]
+Distribution-free. One calibration forward pass. Deployable on Jetson Orin.
+
+\column{0.52\textwidth}
+\begin{center}
+\small
+\begin{tabular}{@{}p{3.0cm}lp{2.6cm}@{}}
+\toprule
+\textbf{Prediction Set} & \textbf{Meaning} & \textbf{HITL Decision} \\
+\midrule
+$\{\texttt{COMMAND}\}$ & High confidence & Proceed (safety check only) \\
+$\{\texttt{COMMAND, ABORT}\}$ & Ambiguous & HITL mandatory \\
+All 5 classes & OOD input & Reject + rephrase \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+\begin{exampleblock}{Research Novelty}
+\small
+HITL rate = tunable parameter (via $\alpha$). We empirically study the
+\textbf{alert-fatigue vs.\ safety tradeoff} across $\alpha \in [0.01, 0.20]$.
+\end{exampleblock}
+\end{columns}
+
+\medskip
+\begin{alertblock}{Safety-Asymmetric Extension (Mondrian Conformal)}
+\small
+\texttt{ABORT} class gets stricter coverage ($\alpha_{\text{abort}} = 0.01$) than routine queries
+($\alpha_{\text{query}} = 0.10$) --- per-class Mondrian conformal prediction.
+\end{alertblock}
+
+\end{frame}
+
+% =====================================================================
+% SLIDE 6 — HITL Design
+% =====================================================================
+\begin{frame}{Human-in-the-Loop Gate: Rule-Auditable, Not Learned}
+
+\begin{columns}[T]
+\column{0.48\textwidth}
+\textbf{5 Rule-Auditable Trigger Conditions:}
+\begin{enumerate}\small
+  \item Action $\in$ \{\texttt{SPRAY, ABORT\_MISSION,}\\ \texttt{DOSAGE\_CHANGE, ZONE\_OVERRIDE}\}
+  \item Conformal set non-singleton ($\geq$2 intents)
+  \item Any entity unverified against KB
+  \item User role = \texttt{OBSERVER} (read-only)
+  \item Upstream data quality check failed
+\end{enumerate}
+
+\medskip
+\small Each trigger $\to$ \textbf{explicit human-readable audit string}\\
+(no LLM involved in trigger explanation)
+
+\column{0.50\textwidth}
+\begin{block}{Operator Response Options}
+\begin{itemize}\small
+  \item \texttt{YES} $\to$ execute command as proposed
+  \item \texttt{NO} $\to$ abort; log refusal reason
+  \item \texttt{MODIFY} $\to$ operator specifies override; system re-grounds
+\end{itemize}
+\end{block}
+
+\medskip
+\begin{block}{Why Rule-Auditable (Not Learned)?}
+\small
+A learned gate cannot be audited by an agronomist or regulator. \\
+Rule-auditable gates are: version-controlled, explainable by design, testable with unit tests.
+\end{block}
+
+\end{columns}
+
+\medskip
+\begin{center}
+\small
+\textbf{HITL is not a limitation --- it is the research subject.} \\
+RQ1 asks: what is the optimal $\alpha$ for each action class to minimise\\ 
+unnecessary HITL while maintaining $\geq$0.99 recall on \texttt{ABORT}?
+\end{center}
+
+\end{frame}
+
+% =====================================================================
+% SLIDE 7 — Faithful Explanation (C3)
+% =====================================================================
+\begin{frame}{Faithful Explanation (C3): Three Levels of Verifiability}
+
+\begin{block}{The Core Distinction}
+\textbf{Plausible explanation}: ``I recommended spraying because conditions were suitable.'' \\
+\textbf{Faithful explanation}: ``I recommended spraying because: (1) soil moisture = 41\% $<$ 45\% threshold
+[AGROVOC:soil-moisture-threshold]; (2) wind = 1.8\,m/s $<$ 3\,m/s spray limit [EPPO:spray-conditions];
+(3) last spray was 6 days ago [audit-log:event-2847]; HITL triggered: action=SPRAY.''
+\end{block}
+
+\begin{columns}[T]
+\column{0.32\textwidth}
+\begin{exampleblock}{Level 1: Rule-Auditable}
+\small
+HITL trigger reasons are explicit rule-derived strings. No LLM involved.
+\end{exampleblock}
+
+\column{0.32\textwidth}
+\begin{exampleblock}{Level 2: KB-Traceable}
+\small
+Every command element cites PPDB/EPPO/AGROVOC source URI as verifiable provenance.
+\end{exampleblock}
+
+\column{0.32\textwidth}
+\begin{exampleblock}{Level 3: Attribution-Grounded}
+\small
+Integrated Gradients attribute which input tokens drove the LLM's intent prediction.
+\end{exampleblock}
+\end{columns}
+
+\medskip
+\begin{alertblock}{Connection to My BVF Research}
+\small
+BVF uses Fisher-Rao geometry to trace representation transitions across Llama/OLMo/Gemma/Mistral/Qwen.
+C3 applies the same analytical lens to the agricultural fine-tuned LLM: which contextual features
+(sensor readings, KB entities) activate each intent class in representation space.
+\textbf{BVF $\to$ C3 is a direct research lineage, not a stretch.}
+\end{alertblock}
+
+\end{frame}
+
+% =====================================================================
+% SLIDE 8 — Metaflow as Scientific Infrastructure
+% =====================================================================
+\begin{frame}{Metaflow: Scientific Necessity, Not Engineering Preference}
+
+\begin{columns}[T]
+\column{0.48\textwidth}
+\textbf{Why Reproducibility Is a Scientific Problem Here}
+\begin{itemize}\small
+  \item Agricultural AI experiments are weather-dependent, season-bound, farm-specific
+  \item Published results cannot be replicated without complete pipeline versioning
+  \item Supervisors in \textbf{Lyon and Milan} must inspect \emph{identical} pipeline state
+\end{itemize}
+
+\medskip
+\textbf{Metaflow's ``3 Vs'' (Tagliabue et al., MLSys 2023):}
+\begin{itemize}\small
+  \item \textbf{Velocity}: Iterate on C1 without re-running IoT ingestion
+  \item \textbf{Validation}: Both supervisors inspect same artifact-level run
+  \item \textbf{Versioning}: Model regression $\to$ detectable by run-ID comparison
+\end{itemize}
+
+\column{0.50\textwidth}
+\begin{block}{Prototype $\to$ Production: Same Code}
+\begin{center}
+\small
+\texttt{@batch(gpu=1)} on fine-tuning step:\\
+--- Local: falls back to CPU\\
+--- AWS: uses GPU endpoint\\[4pt]
+\textbf{Pipeline validated in Lyon (M6--8)\\
+deploys at UniMI farm in Milan (M20)\\
+with zero code changes.}
+\end{center}
+\end{block}
+
+\medskip
+\begin{block}{DAG Concepts in This PhD}
+\small
+\textbf{Business Logic} = HITL rules (version-controlled)\\
+\textbf{Environment} = @batch / @kubernetes / local\\
+\textbf{Documentation} = @card $\to$ agronomist reports
+\end{block}
+\end{columns}
+
+\end{frame}
+
+% =====================================================================
+% SLIDE 9 — Evaluation Plan
+% =====================================================================
+\begin{frame}{Evaluation Plan: 9-Metric Framework}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}lXr@{}}
+\toprule
+\textbf{Dimension} & \textbf{Metric} & \textbf{Target} \\
+\midrule
+Intent classification & Macro-F1 on held-out agricultural corpus & $\geq 0.92$ \\
+Calibration & Expected Calibration Error (ECE) & $< 0.05$ \\
+Safety recall & Recall on \texttt{ABORT} class & $\geq 0.99$ \\
+Grounding fidelity & \% commands with all entities KB-verified & $\geq 0.95$ \\
+Faithfulness & Attribution $\leftrightarrow$ KB trace alignment (Kendall $\tau$) & $> 0.70$ \\
+Edge latency & Intent classification on Jetson Orin & $< 800$\,ms \\
+HITL fatigue & Confirmation rate on unambiguous routine queries & $< 15\%$ \\
+Trust calibration & Operator acceptance of correct recommendations & $\geq 0.80$ \\
+Spray accuracy (Y2) & Dosage error vs.\ prescription map & $< 5\%$ \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\medskip
+\begin{columns}[T]
+\column{0.48\textwidth}
+\begin{block}{Datasets}
+\small
+\begin{itemize}[itemsep=0pt]
+  \item Agronomist interviews, ProBayes partner farms
+  \item GPT-4 synthetic + expert validation (500+ queries)
+  \item ACRE drone imagery, PANGAEA soil datasets
+  \item OpenWeather API for meteorological context
+\end{itemize}
+\end{block}
+
+\column{0.48\textwidth}
+\begin{block}{Year 2 Simulation Baseline}
+\small
+All metrics except spray accuracy achievable in Gazebo simulation.
+Real robot validation (Prof.\ Oberti) in M14--20.
+\textbf{All 3 papers feasible on simulation + public data alone.}
+\end{block}
+\end{columns}
+
+\end{frame}
+
+% =====================================================================
+% SLIDE 10 — 36-Month Roadmap
+% =====================================================================
+\begin{frame}{36-Month Research Roadmap}
+
+\begin{center}
+\scriptsize
+\begin{ganttchart}[
+    hgrid, vgrid,
+    bar/.append style={fill=techblue!40,rounded corners=1pt},
+    bar label font=\tiny,
+    group label font=\tiny\bfseries,
+    milestone label font=\tiny\itshape,
+    title label font=\tiny,
+    x unit=0.20cm, y unit chart=0.40cm,
+    time slot format=isodate-yearmonth,
+    time slot unit=month]{2026-10}{2029-09}
+  \gantttitlecalendar{year} \\
+  \ganttgroup{\color{techblue}Year 1 --- Lyon}{2026-10}{2027-09} \\
+  \ganttbar[bar/.append style={fill=techblue!35}]{Literature + architecture}{2026-10}{2027-01} \\
+  \ganttbar[bar/.append style={fill=agrigreen!50}]{Corpus collection}{2026-11}{2027-03} \\
+  \ganttbar[bar/.append style={fill=techblue!50}]{Metaflow IoT pipeline (C4)}{2027-01}{2027-04} \\
+  \ganttbar[bar/.append style={fill=agrigreen!55}]{LLM fine-tuning}{2027-02}{2027-06} \\
+  \ganttbar[bar/.append style={fill=trustpurple!50}]{Conformal calibration (C1)}{2027-04}{2027-08} \\
+  \ganttmilestone{\textit{Paper 1 / ACL 2027}}{2027-08} \\
+  \ganttgroup{\color{agrigreen}Year 2 --- Milan + ProBayes}{2027-10}{2028-09} \\
+  \ganttbar[bar/.append style={fill=warnorange!60}]{ProBayes secondment}{2027-10}{2028-03} \\
+  \ganttbar[bar/.append style={fill=techblue!50}]{TSCA streaming (C2)}{2027-12}{2028-05} \\
+  \ganttbar[bar/.append style={fill=agrigreen!45}]{Gazebo + ROS2}{2028-02}{2028-06} \\
+  \ganttbar[bar/.append style={fill=trustpurple!40}]{HITL user study}{2028-04}{2028-09} \\
+  \ganttmilestone{\textit{Paper 2 / VLDB 2028}}{2028-06} \\
+  \ganttgroup{\color{trustpurple}Year 3 --- Both}{2028-10}{2029-09} \\
+  \ganttbar[bar/.append style={fill=trustpurple!50}]{Faithful explanation (C3)}{2028-10}{2029-02} \\
+  \ganttbar[bar/.append style={fill=agrigreen!40}]{Cross-farm study}{2029-01}{2029-04} \\
+  \ganttmilestone{\textit{Paper 3 / FAccT 2029}}{2029-03} \\
+  \ganttbar[bar/.append style={fill=techblue!35}]{Thesis writing}{2029-02}{2029-08} \\
+  \ganttmilestone{\textit{Paper 4 / MLSys 2029}}{2029-06} \\
+  \ganttmilestone{\textbf{Defence}}{2029-09}
+\end{ganttchart}
+\end{center}
+
+\end{frame}
+
+% =====================================================================
+% SLIDE 11 — My Unique Positioning
+% =====================================================================
+\begin{frame}{Why I Am the Right Candidate}
+
+\begin{columns}[T]
+\column{0.48\textwidth}
+\textbf{\color{techblue}What I Am:}
+\begin{itemize}\small
+  \item Researcher in \textbf{trustworthy conversational AI} for human-supervised robotic systems
+  \item Not: robotics hardware engineer
+  \item Not: generic agriculture chatbot developer
+\end{itemize}
+
+\medskip
+\begin{block}{BVF Research $\to$ C3 (Direct Lineage)}
+\small
+Fisher-Rao geometry traces LLM belief transitions in Llama, OLMo, Gemma, Mistral, Qwen.
+Same analytical lens $\to$ attribution-grounded explanation for agricultural intent classifier.
+\textbf{C3 is BVF applied to a high-stakes domain.}
+\end{block}
+
+\begin{block}{CFL Paper $\to$ C2 Year 3}
+\small
+SpringerNature ICOMP'24: clustered federated learning for heterogeneous edge data.
+$\to$ Privacy-preserving cross-farm model generalisation (C2, Year 3, GDPR-compliant).
+\end{block}
+
+\column{0.50\textwidth}
+\begin{block}{Teaching Experience $\to$ User Study Design}
+\small
+3 years: Nalhati Govt.\ Polytechnic, 50+ IoT student projects.
+$\to$ Practical IoT deployment realities.
+$\to$ Designing HITL user studies for non-expert operators (Year 2).
+\end{block}
+
+\begin{block}{Supervision Fit}
+\small
+\textbf{Dr.\ Vargas-Solar (Lyon):} DAG data management + query formalisation for TSCA (C2). C1, C3 NLP/AI research base.\\[4pt]
+\textbf{Prof.\ Oberti (Milan):} Precision crop protection domain knowledge. Real robot integration Year 2.
+\end{block}
+
+\medskip
+\small\textbf{Honest edge:} Limited robotics hardware experience.\\
+\textbf{Plan:} Year 1 simulation-first (Gazebo). Year 2 guided integration under Prof.\ Oberti.\\
+This is a \emph{learning trajectory}, not a gap.
+
+\end{columns}
+
+\end{frame}
+
+% =====================================================================
+% SLIDE 12 — Expected Contributions and Close
+% =====================================================================
+\begin{frame}{Expected Contributions and Open Questions for You}
+
+\begin{columns}[T]
+\column{0.50\textwidth}
+\textbf{\color{techblue}Four Contributions $\times$ Four Venues:}
+\begin{itemize}\small
+  \item \textbf{C1 -- CIC}: Conformal prediction for agricultural intent \\
+    \textit{ACL 2027 / EMNLP 2027}
+  \item \textbf{C2 -- TSCA}: Streaming temporal grounding \\
+    \textit{VLDB 2027 / AAAI 2028}
+  \item \textbf{C3 -- FAES}: Faithful attribution explanations \\
+    \textit{FAccT 2028}
+  \item \textbf{C4 -- RAAI}: Metaflow for reproducible agri-AI \\
+    \textit{MLSys 2027 / VLDB Demo}
+\end{itemize}
+
+\medskip
+\small
+\textbf{One-sentence summary:}
+\begin{center}
+\itshape
+``How can calibrated uncertainty estimation and faithful explanation make NL-commanded agricultural robots trustworthy for non-expert human oversight?''
+\end{center}
+
+\column{0.48\textwidth}
+\begin{alertblock}{Open Questions for Supervisors}
+\begin{enumerate}\small
+  \item \textbf{Dr.\ Vargas-Solar}: How does your DAG-based dataflow formalism map to the TSCA streaming consistency model? Are there query operators from your prior work that directly apply?
+  \item \textbf{Prof.\ Oberti}: For the HITL user study in Year 2 --- what operator roles and farm scenarios from your precision spraying work would be most informative for ecological validity?
+  \item Both: How do you envision the ProBayes secondment shaping the calibration methods in C1?
+\end{enumerate}
+\end{alertblock}
+
+\medskip
+\begin{center}
+\small
+\textbf{Thank you. I welcome your critical feedback on the proposal.}
+\end{center}
+\end{columns}
+
+\end{frame}
+
+\end{document}

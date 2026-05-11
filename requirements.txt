@@ -1,0 +1,73 @@
+# AgriTalk: Calibrated Conversational AI for Agricultural Robotics
+# GreenFieldData MSCA PhD-L — Partha Pratim Saha
+# Requirements for all pipeline components
+
+# ─── Core ML / LLM ───────────────────────────────────────────────────────────
+torch>=2.1.0
+transformers>=4.40.0
+peft>=0.9.0
+bitsandbytes>=0.43.0          # 4-bit quantization (GGUF via llama-cpp-python)
+accelerate>=0.27.0
+datasets>=2.18.0
+sentencepiece>=0.2.0
+tiktoken>=0.6.0
+
+# ─── Conformal Prediction ────────────────────────────────────────────────────
+# Option A: lightweight conformal-prediction package
+# conformal-prediction>=0.3.0
+# Option B: nonconformist (more flexible)
+nonconformist>=2.1.0
+
+# ─── Attribution / Faithfulness (C3) ─────────────────────────────────────────
+captum>=0.7.0                  # Integrated Gradients (Meta)
+
+# ─── Streaming / IoT (C2) ────────────────────────────────────────────────────
+kafka-python>=2.0.2
+pyspark>=3.5.0                 # Spark Structured Streaming
+
+# ─── Metaflow (C4) ───────────────────────────────────────────────────────────
+metaflow>=2.10.0
+
+# ─── Knowledge Base / Ontology ───────────────────────────────────────────────
+rdflib>=7.0.0                  # AGROVOC OWL ontology parsing
+SPARQLWrapper>=2.0.0           # AGROVOC SPARQL endpoint queries
+requests>=2.31.0
+
+# ─── Data Quality ────────────────────────────────────────────────────────────
+great-expectations>=0.18.0     # IoT data quality validation (B1)
+
+# ─── NLP Utilities ───────────────────────────────────────────────────────────
+spacy>=3.7.0
+en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
+sentence-transformers>=2.6.0   # Semantic similarity for slot grounding
+
+# ─── Federated Learning (C2 Year 3) ──────────────────────────────────────────
+flwr>=1.8.0                    # Flower federated learning framework
+
+# ─── Auth / Security ─────────────────────────────────────────────────────────
+PyJWT>=2.8.0                   # JWT for role-based access control (OBSERVER/OPERATOR/AGRONOMIST)
+cryptography>=42.0.0
+
+# ─── Simulation (Year 1) ─────────────────────────────────────────────────────
+# rclpy                         # ROS2 Python client — install via rosdep, NOT pip
+# rclpy is managed by the ROS2 distribution (Humble / Iron). Install with:
+#   sudo apt install ros-humble-rclpy  (Ubuntu)
+# For local simulation without ROS2: the pipeline runs in dry_run=True mode.
+
+# ─── Visualisation ───────────────────────────────────────────────────────────
+matplotlib>=3.8.0
+plotly>=5.20.0
+kaleido>=0.2.1                 # Plotly static export
+Pillow>=10.2.0
+
+# ─── Development / Evaluation ────────────────────────────────────────────────
+scikit-learn>=1.4.0            # ECE calculation, confusion matrix, Kendall tau
+scipy>=1.12.0
+numpy>=1.26.0
+pandas>=2.2.0
+tqdm>=4.66.0
+wandb>=0.16.0                  # Experiment tracking (optional; can use Metaflow cards)
+pytest>=8.0.0
+
+# ─── LaTeX / Reporting (optional) ────────────────────────────────────────────
+# pypdf>=4.0.0                  # Inspect generated PDFs programmatically
