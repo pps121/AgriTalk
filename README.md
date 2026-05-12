@@ -3,9 +3,8 @@
 
 ## What is this?
 
-This repository contains the full materials for the AgriTalk PhD proposal, submitted to the GreenFieldData PhD-L competition. AgriTalk proposes **calibrated natural-language control interfaces for agricultural spray robots**, addressing the fundamental bottleneck that prevents non-expert farm operators from safely directing intelligent IoRT (Internet of Robotic Things) systems in precision agriculture.
+This repository contains the full materials for the AgriTalk : GreenFieldData PhD-L competition. AgriTalk proposes **calibrated natural-language control interfaces for agricultural spray robots**, addressing the fundamental bottleneck that prevents non-expert farm operators from safely directing intelligent IoRT (Internet of Robotic Things) systems in precision agriculture.
 
-The proposal targets the IoRT agricultural market projected at **$11.9B by 2030** (19.3% CAGR), where the control interface remains the unsolved problem.
 
 ---
 
